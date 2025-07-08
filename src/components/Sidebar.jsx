@@ -6,7 +6,11 @@ const Sidebar = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const currentUser = JSON.parse(localStorage.getItem('currentUser'));
-
+  const handleLogout = () => {
+    localStorage.removeItem('currentUser');
+    // Cập nhật lại state trong App component bằng cách tải lại trang
+    window.location.href = '/';
+  };
   const protectedLinks = ['/discover', '/albums', '/artists'];
 
   const handleProtectedNavigate = (path) => {
@@ -113,13 +117,24 @@ return (
         >
           <span>⚙️</span> Setting
         </a>
-        <Link
-          to="/login"
-          onClick={() => handleProtectedNavigate('/login')}
-          className="cursor-pointer flex items-center gap-2 py-2 px-3 rounded-lg hover:bg-[#2d2240] w-full text-left"
-        >
-          <span>></span> Login
-        </Link>
+        {/* Phần đăng nhập/đăng xuất */}
+      <div className="mt-auto pt-4 border-t border-gray-700">
+        {currentUser ? (
+          <button
+            onClick={handleLogout}
+            className="w-full flex items-center gap-2 py-2 px-3 rounded-lg hover:bg-[#2d2240] text-red-400 font-semibold"
+          >
+            <span>🚪</span> Đăng xuất
+          </button>
+        ) : (
+          <Link
+            to="/login"
+            className="flex items-center gap-2 py-2 px-3 rounded-lg hover:bg-[#2d2240] font-semibold"
+          >
+            <span>🔑</span> Đăng nhập
+          </Link>
+        )}
+      </div>
       </div>
     </nav>
   </aside>

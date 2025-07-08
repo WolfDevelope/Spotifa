@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useNavigate, useLocation } from 'react-router-dom';
-const Login = () => {
+const Login = ({ onLogin }) => {
   const navigate = useNavigate();
   const location = useLocation();
   const fromPath = location.state?.from?.pathname || '/';
@@ -17,6 +17,7 @@ const Login = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
+      
       const res = await fetch(`${API_URL}?apiKey=${API_KEY}`);
       const responseData = await res.json();
   
@@ -33,6 +34,7 @@ const Login = () => {
   
       if (user) {
         localStorage.setItem('currentUser', JSON.stringify(user));
+        onLogin(user); // Cập nhật state currentUser trong App
         navigate(fromPath, { replace: true });
 
       } else {
