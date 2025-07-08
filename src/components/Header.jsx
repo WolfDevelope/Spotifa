@@ -7,7 +7,8 @@ const Header = ({ user }) => {
 
   const handleLogout = () => {
     localStorage.removeItem('currentUser');
-    navigate('/login');
+    navigate('/');
+    window.location.reload(); // Tải lại trang để cập nhật trạng thái
   };
 
   return (
