@@ -12,27 +12,23 @@ import Account from './pages/Account';
 function App() {
   const [isPlaying, setIsPlaying] = useState(false);
   const location = useLocation();
-  const hiddenPlayerRoutes = ['/login', '/signup', '/account'];
-  const isAuthPage = hiddenPlayerRoutes.includes(location.pathname);
+ 
+
+
   const [currentUser, setCurrentUser] = useState(() => {
     return JSON.parse(localStorage.getItem('currentUser'));
   });
-   // Hàm xử lý đăng xuất
-   const handleLogout = () => {
-    localStorage.removeItem('currentUser');
-    setCurrentUser(null);
-    // Chỉ chuyển hướng nếu không phải đang ở trang chủ
-  if (location.pathname !== '/') {
-    navigate('/');
-  }
-};
+   
+
+const isHiddenPage = ['/login', '/signup', '/account'].includes(location.pathname);
+const shouldShowMusicPlayer = !isHiddenPage && !(location.pathname === '/' && !currentUser);
   return (
     <>
       
-      <div style={{ paddingBottom: isAuthPage ? '0' : '72px' }}>
+      <div style={{ paddingBottom: shouldShowMusicPlayer ? '72px' : '0' }}>
 
         <Routes>
-          <Route path="/" element={<Home />} />
+          <Route path="/" element={<Home currentUser={currentUser}/>} />
           <Route path="/login" element={<Login onLogin={setCurrentUser}/>} />
           <Route path="/signup" element={<SignUp onSignup={setCurrentUser}/>} />
           <Route path="/account" element={<Account />} />
@@ -43,13 +39,14 @@ function App() {
         </Routes>        
       </div>
 
-{!isAuthPage && (
-      <MusicPlayer 
-        isPlaying={isPlaying}
-        setIsPlaying={setIsPlaying}
-        isAuthPage={isAuthPage}
-      />
+      {shouldShowMusicPlayer && (
+  <MusicPlayer 
+    isPlaying={isPlaying}
+    setIsPlaying={setIsPlaying}
+    isAuthPage={isHiddenPage}
+  />
 )}
+
     </>
   );
 }
