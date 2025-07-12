@@ -1,18 +1,23 @@
-import React, { useState, useRef, useEffect } from 'react';
-import { FaPlay, FaPause, FaStepForward, FaStepBackward, FaRandom, FaRedo, FaVolumeUp, FaVolumeMute } from 'react-icons/fa';
-import { IoMdMusicalNote } from 'react-icons/io';
-import '../assets/styles/MusicPlayer.css';
-import data from '../data';
-
-// Gộp toàn bộ danh sách bài hát có src
-const allTracks = [
-  ...data.weeklyTopSongs,
-  ...data.newReleaseSongs,
-  ...data.trendingSongs,
-  // Có thể thêm nữa nếu cần
-];
+import React, { useState, useRef, useEffect } from "react";
+import {
+  FaPlay,
+  FaPause,
+  FaStepForward,
+  FaStepBackward,
+  FaRandom,
+  FaRedo,
+  FaVolumeUp,
+  FaVolumeMute,
+} from "react-icons/fa";
+import { IoMdMusicalNote } from "react-icons/io";
+import "../assets/styles/MusicPlayer.css";
+import data from "../data";
+import { useMusic } from "../context/MusicContext";
+import { findArtistById } from "../utils/dataProcessor";
 
 const MusicPlayer = ({ isPlaying, setIsPlaying }) => {
+  const { currentTrack, setCurrentTrack } = useMusic();
+
   const [trackIndex, setTrackIndex] = useState(0);
   const [volume, setVolume] = useState(80);
   const [duration, setDuration] = useState(0);
@@ -25,12 +30,12 @@ const MusicPlayer = ({ isPlaying, setIsPlaying }) => {
   const progressBarRef = useRef(null);
   const volumeBarRef = useRef(null);
 
-  const currentTrack = allTracks[trackIndex];
+  const allTracks = data.songs;
 
   const formatTime = (time) => {
     const minutes = Math.floor(time / 60);
     const seconds = Math.floor(time % 60);
-    return `${minutes}:${seconds < 10 ? '0' : ''}${seconds}`;
+    return `${minutes}:${seconds < 10 ? "0" : ""}${seconds}`;
   };
 
   const togglePlay = () => {
@@ -44,7 +49,8 @@ const MusicPlayer = ({ isPlaying, setIsPlaying }) => {
 
   const updateProgress = () => {
     if (audioRef.current) {
-      const progress = (audioRef.current.currentTime / audioRef.current.duration) * 100;
+      const progress =
+        (audioRef.current.currentTime / audioRef.current.duration) * 100;
       progressBarRef.current.style.width = `${progress}%`;
       setCurrentTime(audioRef.current.currentTime);
     }
@@ -65,17 +71,11 @@ const MusicPlayer = ({ isPlaying, setIsPlaying }) => {
     const newVolume = e.target.value;
     setVolume(newVolume);
     audioRef.current.volume = newVolume / 100;
-    if (newVolume > 0 && isMuted) {
-      setIsMuted(false);
-    }
+    if (newVolume > 0 && isMuted) setIsMuted(false);
   };
 
   const toggleMute = () => {
-    if (isMuted) {
-      audioRef.current.volume = volume / 100;
-    } else {
-      audioRef.current.volume = 0;
-    }
+    audioRef.current.volume = isMuted ? volume / 100 : 0;
     setIsMuted(!isMuted);
   };
 
@@ -88,23 +88,34 @@ const MusicPlayer = ({ isPlaying, setIsPlaying }) => {
     }
   };
 
+  const currentIndex = allTracks.findIndex(
+    (track) => track.id === currentTrack?.id
+  );
+
   const handleNext = () => {
-    const nextIndex = isShuffle
-      ? Math.floor(Math.random() * allTracks.length)
-      : (trackIndex + 1) % allTracks.length;
-    setTrackIndex(nextIndex);
+    let nextIndex;
+    if (isShuffle) {
+      do {
+        nextIndex = Math.floor(Math.random() * allTracks.length);
+      } while (nextIndex === currentIndex && allTracks.length > 1);
+    } else {
+      nextIndex = (currentIndex + 1) % allTracks.length;
+    }
+    setCurrentTrack(allTracks[nextIndex]);
+    setIsPlaying(true);
   };
 
   const handlePrevious = () => {
-    const prevIndex = trackIndex === 0 ? allTracks.length - 1 : trackIndex - 1;
-    setTrackIndex(prevIndex);
+    const prevIndex = (currentIndex - 1 + allTracks.length) % allTracks.length;
+    setCurrentTrack(allTracks[prevIndex]);
+    setIsPlaying(true);
   };
 
   useEffect(() => {
     if (currentTrack && audioRef.current) {
       audioRef.current.src = currentTrack.src;
       if (isPlaying) {
-        audioRef.current.play().catch(error => {
+        audioRef.current.play().catch((error) => {
           console.error("Audio play failed:", error);
         });
       }
@@ -112,6 +123,10 @@ const MusicPlayer = ({ isPlaying, setIsPlaying }) => {
   }, [currentTrack]);
 
   if (!currentTrack) return null;
+
+  const artistObj = currentTrack.artistId
+    ? findArtistById(currentTrack.artistId)
+    : null;
 
   return (
     <div className="music-player">
@@ -124,7 +139,11 @@ const MusicPlayer = ({ isPlaying, setIsPlaying }) => {
 
       <div className="track-info">
         {currentTrack.cover ? (
-          <img src={currentTrack.cover} alt={currentTrack.title} className="track-cover" />
+          <img
+            src={currentTrack.cover}
+            alt={currentTrack.title}
+            className="track-cover"
+          />
         ) : (
           <div className="track-cover-placeholder">
             <IoMdMusicalNote size={24} />
@@ -132,7 +151,9 @@ const MusicPlayer = ({ isPlaying, setIsPlaying }) => {
         )}
         <div className="track-details">
           <h4 className="track-title">{currentTrack.title}</h4>
-          <p className="track-artist">{currentTrack.artist}</p>
+          <p className="track-artist">
+            {artistObj ? artistObj.name : "Unknown Artist"}
+          </p>
         </div>
       </div>
 
@@ -146,15 +167,19 @@ const MusicPlayer = ({ isPlaying, setIsPlaying }) => {
         </div>
 
         <div className="controls">
-          <button 
-            className={`control-btn ${isShuffle ? 'active' : ''}`}
+          <button
+            className={`control-btn ${isShuffle ? "active" : ""}`}
             onClick={() => setIsShuffle(!isShuffle)}
             title="Shuffle"
           >
             <FaRandom />
           </button>
 
-          <button className="control-btn" onClick={handlePrevious} title="Previous">
+          <button
+            className="control-btn"
+            onClick={handlePrevious}
+            title="Previous"
+          >
             <FaStepBackward />
           </button>
 
@@ -166,8 +191,8 @@ const MusicPlayer = ({ isPlaying, setIsPlaying }) => {
             <FaStepForward />
           </button>
 
-          <button 
-            className={`control-btn ${isRepeat ? 'active' : ''}`}
+          <button
+            className={`control-btn ${isRepeat ? "active" : ""}`}
             onClick={() => setIsRepeat(!isRepeat)}
             title="Repeat"
           >

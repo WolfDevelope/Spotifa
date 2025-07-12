@@ -9,6 +9,9 @@ import Artists from './pages/Artists';
 import MusicPlayer from './components/MusicPlayer';
 import RequireAuth from './components/RequireAuth';
 import Account from './pages/Account';
+import SongDetail from './pages/SongDetail';
+import AlbumDetail from './pages/AlbumDetail';
+import ArtistsDetail from './pages/ArtistsDetail';
 function App() {
   const [isPlaying, setIsPlaying] = useState(false);
   const location = useLocation();
@@ -36,6 +39,10 @@ const shouldShowMusicPlayer = !isHiddenPage && !(location.pathname === '/' && !c
           <Route path="/discover" element={<RequireAuth><Discover /></RequireAuth>} />
           <Route path="/albums" element={<RequireAuth><Albums /></RequireAuth>} />
           <Route path="/artists" element={<RequireAuth><Artists /></RequireAuth>} />
+          <Route path="/song/:id" element={<SongDetail />} />
+          <Route path="/album/:id" element={<AlbumDetail />} />
+          <Route path="/artist/:id" element={<ArtistsDetail />} />
+
         </Routes>        
       </div>
 
